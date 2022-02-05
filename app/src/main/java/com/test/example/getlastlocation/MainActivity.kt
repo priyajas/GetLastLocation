@@ -1,6 +1,7 @@
 package com.test.example.getlastlocation
 
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Geocoder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,8 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolylineOptions
+import com.google.maps.android.SphericalUtil
 import java.util.*
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -39,11 +42,40 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val geoCoder = Geocoder(this)
             val matches = geoCoder.getFromLocation(latitude, longitude, 1)
             Log.d("CurrentLocation", matches[0].toString())
-            googleMap.addMarker(MarkerOptions().position(pos).title("My location"))
-            map.apply{
-                animateCamera(CameraUpdateFactory.newLatLngZoom(pos, DEFAULT_ZOOM))
-            }
+            addMarker(googleMap, pos)
+            zoomToCurrentLocation(pos)
+            addPolyline(pos)
         }
+    }
+
+    private fun addMarker(
+        googleMap: GoogleMap,
+        pos: LatLng
+    ) {
+        googleMap.addMarker(MarkerOptions().position(pos).title("My location"))
+    }
+
+    private fun zoomToCurrentLocation(pos: LatLng) {
+        map.apply {
+            animateCamera(CameraUpdateFactory.newLatLngZoom(pos, DEFAULT_ZOOM))
+        }
+    }
+
+    private fun addPolyline(pos: LatLng) {
+        val east: LatLng = SphericalUtil.computeOffset(pos, 500.0, 90.0)
+        val south: LatLng = SphericalUtil.computeOffset(pos, 500.0, 180.0)
+        val west: LatLng = SphericalUtil.computeOffset(pos, 500.0, 270.0)
+        val north: LatLng = SphericalUtil.computeOffset(pos, 500.0, 360.0)
+        map.addPolyline(
+            PolylineOptions().add(pos)
+                .add(pos)
+                .add(east)
+                .add(south)
+                .add(west)
+                .add(north)
+                .width(6f)
+                .color(Color.GREEN)
+        )
     }
 
     private fun checkLocationPermission(): Boolean {
@@ -67,6 +99,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         } else state = true
         return state
     }
+
     companion object {
         const val DEFAULT_ZOOM = 14.0F
     }
